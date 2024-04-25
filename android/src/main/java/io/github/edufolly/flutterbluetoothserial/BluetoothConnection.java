@@ -43,11 +43,11 @@ public abstract class BluetoothConnection {
             socket.connect();
         } catch (IOException e) {
             try {
-                socket =(BluetoothSocket) device.getClass().getMethod("createRfcommSocket", int.class).invoke(device, 1);
+                socket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", int.class).invoke(device, 1);
                 socket.connect();
                 bluetoothAdapter.cancelDiscovery();
                 connectionThread = new ConnectionThread(socket);
-                connectionThread.start();
+                connectionThread.start();               
             } catch (Exception e2) {
                 e2.printStackTrace();
             }
@@ -69,7 +69,7 @@ public abstract class BluetoothConnection {
         if (!isConnected()) {
             throw new IOException("Not connected");
         }
-
+        
         connectionThread.write(data);
     }
 
@@ -82,7 +82,7 @@ public abstract class BluetoothConnection {
         private final InputStream input;
         private final OutputStream output;
         private boolean requestedClosing = false;
-
+        
         ConnectionThread(BluetoothSocket socket) {
             this.socket = socket;
             InputStream tmpIn = null;
@@ -90,7 +90,7 @@ public abstract class BluetoothConnection {
 
             try {
                 tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
+                tmpOut = socket.getOutputStream(); 
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -103,13 +103,12 @@ public abstract class BluetoothConnection {
             byte[] buffer = new byte[1024];
             int bytes;
 
-           ```java
             while (!requestedClosing) {
                 try {
                     bytes = input.read(buffer);
                     onRead(Arrays.copyOf(buffer, bytes));
                 } catch (IOException e) {
-                    break;
+                     break;
                 }
             }
 
@@ -124,7 +123,7 @@ public abstract class BluetoothConnection {
                     input.close();
                 } catch (Exception e) {}
             }
-
+            
             onDisconnected(!requestedClosing);
             requestedClosing = true;
         }
