@@ -49,8 +49,8 @@ public abstract class BluetoothConnection
         BluetoothSocket socket = null;
     
         try {
-            socket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[]{int.class}).invoke(device, 1);
-        } catch (Exception e) {
+            socket = device.createInsecureRfcommSocketToServiceRecord(uuid);
+        } catch (IOException e) {
             e.printStackTrace();
             throw new IOException("socket creation failed");
         }
@@ -67,6 +67,7 @@ public abstract class BluetoothConnection
         connectionThread = new ConnectionThread(socket);
         connectionThread.start();
     }
+
 
     /// Connects to given device by hardware address (default UUID used)
     public void connect(String address) throws IOException {
