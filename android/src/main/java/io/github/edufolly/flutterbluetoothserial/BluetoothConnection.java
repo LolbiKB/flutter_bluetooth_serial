@@ -46,18 +46,42 @@ public abstract class BluetoothConnection
             throw new IOException("device not found");
         }
 
-        BluetoothSocket socket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device, 1); // @TODO . introduce ConnectionMethod
-        if (socket == null) {
-            throw new IOException("socket connection not established");
+        BluetoothSocket socket = null;
+
+            try {
+                socket = device.createRfcommSocketToServiceRecord(SERIAL_UUID);
+            } catch (Exception e) {Log.e("","Error creating socket");}
+
+            try {
+                socket.connect();
+                Log.e("","Connected");
+            } catch (IOException e) {
+                Log.e("",e.getMessage());
+                try {
+                    Log.e("","trying fallback...");
+
+                    socket =(BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1);
+                    socket.connect();
+
+                    // Cancel discovery, even though we didn't start it
+                    bluetoothAdapter.cancelDiscovery();
+
+                    connectionThread = new ConnectionThread(socket);
+                    connectionThread.start();
+
+                    Log.e("","Connected");
+                }
+             catch (Exception e2) {
+                 Log.e("", "Couldn't establish Bluetooth connection!");
+              }
+            }
+        }
+        else
+        {
+            Log.e("","BT device not selected");
         }
 
-        // Cancel discovery, even though we didn't start it
-        bluetoothAdapter.cancelDiscovery();
 
-        socket.connect();
-
-        connectionThread = new ConnectionThread(socket);
-        connectionThread.start();
     }
     /// Connects to given device by hardware address (default UUID used)
     public void connect(String address) throws IOException {
