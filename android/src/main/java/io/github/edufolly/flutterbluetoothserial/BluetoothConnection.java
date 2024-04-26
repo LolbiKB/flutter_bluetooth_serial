@@ -63,8 +63,8 @@ public abstract class BluetoothConnection
     public void connect(String address) throws IOException {
         BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
         BluetoothDevice device = btAdapter.getRemoteDevice(address);
-        ParcelUuid[] uuids = (ParcelUuid[]) device.getUuids();
-        connect(address, uuids[0].getUuid());
+        UUID[] uuids = device.getUuids();
+        connect(address, uuids[0]);
     }
     
     /// Disconnects current session (ignore if not connected)
