@@ -35,22 +35,24 @@ public abstract class BluetoothConnection {
     /// Connects to given device by hardware address
     public void connect(String address, UUID uuid) throws IOException {
         if (isConnected()) {
-            throw new IOException("already connected");
+            throw new IOException("Already connected");
         }
-
+    
         // Cancel discovery, even though we didn't start it
         bluetoothAdapter.cancelDiscovery();
         
-        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
-        if (device == null) {
-            throw new IOException("device not found");
-        }
-        
+        BluetoothSocket socket = null;
         try {
-            BluetoothSocket socket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1); // @TODO . introduce ConnectionMethod
-            if (socket == null) {
-                throw new IOException("socket connection not established");
+            BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
+            if (device == null) {
+                throw new IOException("Device not found");
             }
+            
+            socket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device, 1); // @TODO . introduce ConnectionMethod
+            if (socket == null) {
+                throw new IOException("Socket connection not established");
+            }
+            
             socket.connect();
         
             connectionThread = new ConnectionThread(socket);
@@ -66,9 +68,8 @@ public abstract class BluetoothConnection {
             }
             throw new IOException("Failed to connect", e);
         }
-        
-        
     }
+
 
     /// Connects to given device by hardware address (default UUID used)
     public void connect(String address) throws IOException {
