@@ -35,36 +35,26 @@ public abstract class BluetoothConnection {
     /// Connects to given device by hardware address
     public void connect(String address, UUID uuid) throws IOException {
         if (isConnected()) {
-            throw new IOException("Already connected");
+            throw new IOException("already connected");
         }
-    
+
         BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
         if (device == null) {
-            throw new IOException("Device not found");
+            throw new IOException("device not found");
         }
-    
-        BluetoothSocket socket = null;
-        try {
-            socket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device, 1);
-            if (socket == null) {
-                throw new IOException("Socket connection not established");
-            }
-    
-            bluetoothAdapter.cancelDiscovery();
-            socket.connect();
-            connectionThread = new ConnectionThread(socket);
-            connectionThread.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
-            throw new IOException("Failed to connect", e);
+
+        BluetoothSocket socket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1); // @TODO . introduce ConnectionMethod
+        if (socket == null) {
+            throw new IOException("socket connection not established");
         }
+
+        // Cancel discovery, even though we didn't start it
+        bluetoothAdapter.cancelDiscovery();
+
+        socket.connect();
+
+        connectionThread = new ConnectionThread(socket);
+        connectionThread.start();
     }
 
     /// Connects to given device by hardware address (default UUID used)
