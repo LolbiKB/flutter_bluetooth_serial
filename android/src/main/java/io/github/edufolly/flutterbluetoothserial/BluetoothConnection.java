@@ -43,7 +43,17 @@ public abstract class BluetoothConnection {
             throw new IOException("device not found");
         }
 
-        BluetoothSocket socket = device.createRfcommSocketToServiceRecord(uuid); // @TODO . introduce ConnectionMethod
+        BluetoothSocket socket = null;
+        
+        if(Build.VERSION.SDK_INT >= 10){
+            try {
+                socket = (BluetoothSocket)device.getClass().getMethod("createInsecureRfcommSocketToServiceRecord", new Class[] { UUID.class }).invoke(device, uuid);
+            } catch (Exception e) {
+                Log.e(TAG, "Could not create Insecure RFComm Connection",e);
+            }
+        }
+        socket = device.createRfcommSocketToServiceRecord(uuid);
+
         if (socket == null) {
             throw new IOException("socket connection not established");
         }
