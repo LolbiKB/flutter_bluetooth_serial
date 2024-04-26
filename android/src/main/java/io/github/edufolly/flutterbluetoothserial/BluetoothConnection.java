@@ -9,7 +9,7 @@ import java.util.Arrays;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import andriod.os.Parcelable;
+import android.os.ParcelUuid;
 
 /// Universal Bluetooth serial connection class (for Java)
 public abstract class BluetoothConnection
