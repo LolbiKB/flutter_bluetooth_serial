@@ -9,6 +9,7 @@ import java.util.Arrays;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import andriod.os.Parcelable;
 
 /// Universal Bluetooth serial connection class (for Java)
 public abstract class BluetoothConnection
@@ -63,8 +64,8 @@ public abstract class BluetoothConnection
     public void connect(String address) throws IOException {
         BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
         BluetoothDevice device = btAdapter.getRemoteDevice(address);
-        UUID[] uuids = device.getUuids();
-        connect(address, uuids[0]);
+        ParcelUuid[] uuids = (ParcelUuid[]) device.getUuids();
+        connect(address, uuids[0].getUuid());
     }
     
     /// Disconnects current session (ignore if not connected)
