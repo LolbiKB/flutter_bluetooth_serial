@@ -38,6 +38,9 @@ public abstract class BluetoothConnection {
             throw new IOException("already connected");
         }
 
+        // Cancel discovery, even though we didn't start it
+        bluetoothAdapter.cancelDiscovery();
+        
         BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
         if (device == null) {
             throw new IOException("device not found");
@@ -48,15 +51,23 @@ public abstract class BluetoothConnection {
             if (socket == null) {
                 throw new IOException("socket connection not established");
             }
+            socket.connect();
+        
+            connectionThread = new ConnectionThread(socket);
+            connectionThread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            throw new IOException("Failed to connect", e);
         }
-
-        // Cancel discovery, even though we didn't start it
-        bluetoothAdapter.cancelDiscovery();
-
-        socket.connect();
-
-        connectionThread = new ConnectionThread(socket);
-        connectionThread.start();
+        
+        
     }
 
     /// Connects to given device by hardware address (default UUID used)
