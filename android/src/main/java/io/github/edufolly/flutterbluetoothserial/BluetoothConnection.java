@@ -62,7 +62,7 @@ public abstract class BluetoothConnection
     }
     /// Connects to given device by hardware address (default UUID used)
     public void connect(String address) throws IOException {
-        BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         BluetoothDevice device = btAdapter.getRemoteDevice(address);
         ParcelUuid[] uuids = (ParcelUuid[]) device.getUuids();
         connect(address, uuids[0].getUuid());
