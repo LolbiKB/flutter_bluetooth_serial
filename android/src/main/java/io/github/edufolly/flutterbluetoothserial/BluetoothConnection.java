@@ -42,10 +42,12 @@ public abstract class BluetoothConnection {
         if (device == null) {
             throw new IOException("device not found");
         }
-
-        BluetoothSocket socket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1); // @TODO . introduce ConnectionMethod
-        if (socket == null) {
-            throw new IOException("socket connection not established");
+        
+        try {
+            BluetoothSocket socket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1); // @TODO . introduce ConnectionMethod
+            if (socket == null) {
+                throw new IOException("socket connection not established");
+            }
         }
 
         // Cancel discovery, even though we didn't start it
