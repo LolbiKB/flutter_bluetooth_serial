@@ -5,15 +5,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 import java.util.Arrays;
-import java.util.function.Consumer;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.os.ParcelUuid;
 
 /// Universal Bluetooth serial connection class (for Java)
-public class BluetoothConnectionClassic extends BluetoothConnectionBase
-{
+public abstract class BluetoothConnection {
     protected static final UUID DEFAULT_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     protected BluetoothAdapter bluetoothAdapter;
@@ -24,19 +23,16 @@ public class BluetoothConnectionClassic extends BluetoothConnectionBase
         return connectionThread != null && connectionThread.requestedClosing != true;
     }
 
-
-
-    public BluetoothConnectionClassic(OnReadCallback onReadCallback, OnDisconnectedCallback onDisconnectedCallback, BluetoothAdapter bluetoothAdapter) {
-        super(onReadCallback, onDisconnectedCallback);
+    public BluetoothConnection(BluetoothAdapter bluetoothAdapter) {
         this.bluetoothAdapter = bluetoothAdapter;
     }
 
-
-
     // @TODO . `connect` could be done perfored on the other thread
     // @TODO . `connect` parameter: timeout
-    // @TODO . `connect` other methods than `createRfcommSocketToServiceRecord`, including hidden one raw `createRfcommSocket` (on channel).
+    // @TODO . `connect` other methods than `createRfcommSocketToServiceRecord`,
+    // including hidden one raw `createRfcommSocket` (on channel).
     // @TODO ? how about turning it into factoried?
+    /// Connects to given device by hardware address
     public void connect(String address, UUID uuid) throws IOException {
         if (isConnected()) {
             throw new IOException("already connected");
@@ -55,26 +51,21 @@ public class BluetoothConnectionClassic extends BluetoothConnectionBase
         // Cancel discovery, even though we didn't start it
         bluetoothAdapter.cancelDiscovery();
 
-        try {
-            socket.connect();
-        } catch (IOException e) {
-            try {
-                // Newer versions of android may require voodoo; see https://stackoverflow.com/a/25647197
-                socket = (BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1);
-                socket.connect();
-            } catch (Exception e2) {
-                throw new IOException("Failed to connect", e2);
-            }
-        }
+        socket.connect();
 
         connectionThread = new ConnectionThread(socket);
         connectionThread.start();
     }
 
+    /// Connects to given device by hardware address (default UUID used)
     public void connect(String address) throws IOException {
-        connect(address, DEFAULT_UUID);
+        BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
+        BluetoothDevice device = btAdapter.getRemoteDevice(address);
+        ParcelUuid[] uuids = (ParcelUuid[]) device.getUuids();
+        connect(address, uuids[0].getUuid());
     }
-    
+
+    /// Disconnects current session (ignore if not connected)
     public void disconnect() {
         if (isConnected()) {
             connectionThread.cancel();
@@ -82,6 +73,7 @@ public class BluetoothConnectionClassic extends BluetoothConnectionBase
         }
     }
 
+    /// Writes to connected remote device
     public void write(byte[] data) throws IOException {
         if (!isConnected()) {
             throw new IOException("not connected");
@@ -90,13 +82,19 @@ public class BluetoothConnectionClassic extends BluetoothConnectionBase
         connectionThread.write(data);
     }
 
+    /// Callback for reading data.
+    protected abstract void onRead(byte[] data);
+
+    /// Callback for disconnection.
+    protected abstract void onDisconnected(boolean byRemote);
+
     /// Thread to handle connection I/O
-    private class ConnectionThread extends Thread  {
+    private class ConnectionThread extends Thread {
         private final BluetoothSocket socket;
         private final InputStream input;
         private final OutputStream output;
         private boolean requestedClosing = false;
-        
+
         ConnectionThread(BluetoothSocket socket) {
             this.socket = socket;
             InputStream tmpIn = null;
@@ -133,16 +131,16 @@ public class BluetoothConnectionClassic extends BluetoothConnectionBase
             if (output != null) {
                 try {
                     output.close();
+                } catch (Exception e) {
                 }
-                catch (Exception e) {}
             }
 
             // Make sure input stream is closed
             if (input != null) {
                 try {
                     input.close();
+                } catch (Exception e) {
                 }
-                catch (Exception e) {}
             }
 
             // Callback on disconnected, with information which side is closing
@@ -171,8 +169,8 @@ public class BluetoothConnectionClassic extends BluetoothConnectionBase
             // Flush output buffers befoce closing
             try {
                 output.flush();
+            } catch (Exception e) {
             }
-            catch (Exception e) {}
 
             // Close the connection socket
             if (socket != null) {
@@ -181,8 +179,8 @@ public class BluetoothConnectionClassic extends BluetoothConnectionBase
                     Thread.sleep(111);
 
                     socket.close();
+                } catch (Exception e) {
                 }
-                catch (Exception e) {}
             }
         }
     }
